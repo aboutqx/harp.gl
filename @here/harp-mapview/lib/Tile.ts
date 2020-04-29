@@ -184,6 +184,10 @@ export interface TextElementIndex {
     elementIndex: number;
 }
 
+const tmpMatrix4 = new THREE.Matrix4();
+const tmpV1 = new THREE.Vector3();
+const tmpV2 = new THREE.Vector3();
+
 /**
  * The class that holds the tiled data for a [[DataSource]].
  */
@@ -991,10 +995,12 @@ export class Tile implements CachedResource {
             this.m_boundingBox.copy(newBoundingBox);
 
             // Update geo box to match the given bounding box.
-            const tmpPos = this.m_boundingBox.position.clone().add(this.m_boundingBox.extents);
-            this.geoBox.northEast.copy(this.mapView.projection.unprojectPoint(tmpPos));
-            tmpPos.copy(this.m_boundingBox.position).sub(this.m_boundingBox.extents);
-            this.geoBox.southWest.copy(this.mapView.projection.unprojectPoint(tmpPos));
+            const rotMatrix = this.m_boundingBox.getRotationMatrix(tmpMatrix4);
+            const worldExtents = tmpV1.copy(this.m_boundingBox.extents).applyMatrix4(rotMatrix);
+            const tmpPos = tmpV2.copy(this.m_boundingBox.position).add(worldExtents);
+            this.geoBox.northEast.altitude = this.mapView.projection.unprojectAltitude(tmpPos);
+            tmpPos.copy(this.m_boundingBox.position).sub(worldExtents);
+            this.geoBox.southWest.altitude = this.mapView.projection.unprojectAltitude(tmpPos);
         } else {
             this.projection.projectBox(this.geoBox, this.boundingBox);
         }

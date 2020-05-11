@@ -65,11 +65,6 @@ jobs:
     - name: Build examples
       run: yarn run build-examples
 
-    # - name: Build test bundle
-    #   run: |
-    #     set -ex
-    #     yarn run build-tests
-
     - name: Generate doc
       run: yarn run typedoc
 
@@ -78,12 +73,6 @@ jobs:
       with:
         name: examples
         path: dist/examples/
-
-    # - name: Save Tests
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: tests
-    #     path: dist/test/
 
     - name: Save Docs
       uses: actions/upload-artifact@v2
@@ -260,3 +249,51 @@ jobs:
 
     - name: Test on Node.js ${{ matrix.node_version }}
       run: yarn cov-test --forbid-only
+
+  test-rendering:
+    name: Rendering tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: build-browser-tests
+    strategy:
+      matrix:
+        node_version: [14]
+        os: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - uses: actions/cache@v1
+      name: Yarn cache
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-${{ matrix.node_version }}--yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node_version }}
+
+    - name: Install dependencies
+      run: yarn
+
+    - name: Download test bundle from build job
+      uses: actions/download-artifact@v2
+      with:
+        name: tests
+        path: dist/test
+
+    - name: Ruendering Tests on Chrome
+      run: yarn run-rendering-tests
+
+    - name: Save Rendering test output images
+      uses: actions/upload-artifact@v2
+      with:
+        name: rendering-test-results
+        path: rendering-test-results/

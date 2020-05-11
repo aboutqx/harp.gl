@@ -403,6 +403,26 @@ class SphereProjection extends Projection {
 
     /** @override */
     localTangentSpace(geoPoint: GeoCoordinatesLike, result: TransformLike): TransformLike {
+        this.projectPoint(geoPoint, result.position);
+        this.extractAxes(geoPoint, result.xAxis, result.yAxis, result.zAxis);
+        return result;
+    }
+
+    /** @override */
+    localTangentSpaceFromWorld(worldPos: Vector3Like, result: TransformLike): TransformLike {
+        const geoPoint = this.unprojectPoint(worldPos);
+        this.extractAxes(geoPoint, result.xAxis, result.yAxis, result.zAxis);
+        MathUtils.copyVector3(worldPos, result.position);
+        return result;
+    }
+
+    // Extracts the axes at the given GeoCoordinates.
+    private extractAxes(
+        geoPoint: GeoCoordinatesLike,
+        resultXAxis: Vector3Like,
+        resultYAxis: Vector3Like,
+        resultZAxis: Vector3Like
+    ) {
         const latitude = THREE.MathUtils.degToRad(geoPoint.latitude);
         const longitude = THREE.MathUtils.degToRad(geoPoint.longitude);
 
@@ -415,21 +435,17 @@ class SphereProjection extends Projection {
             cosLongitude * cosLatitude,
             sinLongitude * cosLatitude,
             sinLatitude,
-            result.zAxis
+            resultZAxis
         );
 
-        MathUtils.newVector3(-sinLongitude, cosLongitude, 0, result.xAxis);
+        MathUtils.newVector3(-sinLongitude, cosLongitude, 0, resultXAxis);
 
         MathUtils.newVector3(
             -cosLongitude * sinLatitude,
             -sinLongitude * sinLatitude,
             cosLatitude,
-            result.yAxis
+            resultYAxis
         );
-
-        this.projectPoint(geoPoint, result.position);
-
-        return result;
     }
 }
 

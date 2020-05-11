@@ -94,6 +94,20 @@ export abstract class Projection {
     }
 
     /**
+     * Gets the [[TransformLike]] of the local tangent space at the given world position.
+     *
+     * @param worldPos The world coordinates.
+     * @param result The [[TransformLike]].
+     */
+    localTangentSpaceFromWorld(worldPos: Vector3Like, result: TransformLike): TransformLike {
+        MathUtils.copyVector3(worldPos, result.position);
+        MathUtils.newVector3(1, 0, 0, result.xAxis);
+        MathUtils.newVector3(0, 1, 0, result.yAxis);
+        MathUtils.newVector3(0, 0, 1, result.zAxis);
+        return result;
+    }
+
+    /**
      * Returns the geo coordinates (latitude, longitude, altitude) from the given world position
      * (x,y,z).
      *

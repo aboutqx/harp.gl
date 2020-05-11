@@ -39,6 +39,7 @@ void main() {
     if (color.a < 0.05) {
         discard;
     }
+    color.rgb *= vColor.rgb;
     gl_FragColor = color;
 }`;
 
